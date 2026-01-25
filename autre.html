@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sections avec Grille + Navbar</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            box-sizing: border-box;
+            color: white;
+            z-index: 1000;
+        }
+
+        .navbar ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            opacity: 0.85;
+        }
+
+        .navbar a:hover {
+            opacity: 1;
+        }
+
+        /* Sections */
+        .section {
+            height: 100vh;
+            padding: 40px;
+            padding-top: 110px; /* espace pour la navbar */
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+
+            /* Grille */
+            background-image:
+                repeating-linear-gradient(
+                    to right,
+                    rgba(255,255,255,0.15),
+                    rgba(255,255,255,0.15) 1px,
+                    transparent 1px,
+                    transparent 80px
+                ),
+                repeating-linear-gradient(
+                    to bottom,
+                    rgba(255,255,255,0.15),
+                    rgba(255,255,255,0.15) 1px,
+                    transparent 1px,
+                    transparent 80px
+                );
+        }
+
+        .section:nth-child(odd) {
+            background-color: #1e1e2f;
+        }
+
+        .section:nth-child(even) {
+            background-color: #2f2f1e;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <ul>
+        <li><a href="#s1">Section 1</a></li>
+        <li><a href="#s2">Section 2</a></li>
+        <li><a href="#s3">Section 3</a></li>
+        <li><a href="#s4">Section 4</a></li>
+        <li><a href="#s5">Section 5</a></li>
+        <li><a href="#s6">Section 6</a></li>
+        <li><a href="#s7">Section 7</a></li>
+        <li><a href="#s8">Section 8</a></li>
+    </ul>
+</nav>
+
+<div id="s1" class="section">Section 1</div>
+<div id="s2" class="section">Section 2</div>
+<div id="s3" class="section">Section 3</div>
+<div id="s4" class="section">Section 4</div>
+<div id="s5" class="section">Section 5</div>
+<div id="s6" class="section">Section 6</div>
+<div id="s7" class="section">Section 7</div>
+<div id="s8" class="section">Section 8</div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+(function (window, document) {
+    "use strict";
+
+    function initSmoothScroll(userOptions = {}) {
+        const config = {
+            MOBILE_BREAKPOINT: 768,
+            baseEase: 0.05,
+            maxEase: 0.5,
+            distanceFactor: 2500,
+            stopThreshold: 0.35,
+            scrollMult: 1,
+            minPageHeightRatio: 1.05,
+            offset: 0,
+            ...userOptions
+        };
+
+        const state = {
+            enabled: false,
+            running: false,
+            current: 0,
+            target: 0,
+            maxScroll: 0
+        };
+
+        const clamp = (v, min, max) => Math.max(min, Math.min(v, max));
+
+        /* ---------- Utils ---------- */
+
+        function updateMaxScroll() {
+            state.maxScroll =
+                document.documentElement.scrollHeight - window.innerHeight;
+        }
+
+        function isMobile() {
+            return window.innerWidth < config.MOBILE_BREAKPOINT;
+        }
+
+        function pageTooShort() {
+            return (
+                document.documentElement.scrollHeight <=
+                window.innerHeight * config.minPageHeightRatio
+            );
+        }
+
+        function setNativeScrollBehavior() {
+            const behavior = isMobile() ? "" : "auto";
+            document.documentElement.style.scrollBehavior = behavior;
+            document.body.style.scrollBehavior = behavior;
+        }
+
+        /* ---------- Core ---------- */
+
+        function enable() {
+            if (state.enabled) return;
+
+            state.enabled = true;
+            updateMaxScroll();
+
+            state.current = state.target = window.scrollY;
+
+            window.addEventListener("wheel", onWheel, { passive: false });
+            window.addEventListener("scroll", syncScroll, { passive: true });
+        }
+
+        function disable() {
+            if (!state.enabled) return;
+
+            state.enabled = false;
+            state.running = false;
+
+            window.removeEventListener("wheel", onWheel);
+            window.removeEventListener("scroll", syncScroll);
+        }
+
+        function onWheel(e) {
+            if (e.ctrlKey) return;
+            e.preventDefault();
+
+            updateMaxScroll();
+
+            state.target = clamp(
+                state.target + e.deltaY * config.scrollMult,
+                0,
+                state.maxScroll
+            );
+
+            start();
+        }
+
+        function syncScroll() {
+            if (!state.running) {
+                state.current = state.target = window.scrollY;
+            }
+        }
+
+        function start() {
+            if (state.running) return;
+            state.running = true;
+            requestAnimationFrame(render);
+        }
+
+        function render() {
+            if (!state.enabled) return;
+
+            /* 🔑 FIX CRITIQUE */
+            updateMaxScroll();
+            state.target = clamp(state.target, 0, state.maxScroll);
+
+            const diff = state.target - state.current;
+
+            if (Math.abs(diff) < config.stopThreshold) {
+                state.current = state.target;
+                window.scrollTo(0, state.current);
+                state.running = false;
+                return;
+            }
+
+            const ratio = Math.min(1, Math.abs(diff) / config.distanceFactor);
+            const ease =
+                config.baseEase +
+                (config.maxEase - config.baseEase) * ratio;
+
+            state.current += diff * ease;
+            window.scrollTo(0, state.current);
+
+            requestAnimationFrame(render);
+        }
+
+        /* ---------- Anchors ---------- */
+
+        function setupAnchors() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener("click", e => {
+                    if (isMobile()) return;
+
+                    const targetEl = document.querySelector(
+                        anchor.getAttribute("href")
+                    );
+                    if (!targetEl) return;
+
+                    e.preventDefault();
+                    updateMaxScroll();
+
+                    state.current = state.target = window.scrollY;
+                    state.target =
+                        targetEl.getBoundingClientRect().top +
+                        window.scrollY +
+                        config.offset;
+
+                    state.target = clamp(state.target, 0, state.maxScroll);
+                    start();
+                });
+            });
+        }
+
+        /* ---------- State ---------- */
+
+        function checkState() {
+            if (isMobile() || pageTooShort()) {
+                disable();
+            } else {
+                enable();
+            }
+        }
+
+        /* ---------- Init ---------- */
+
+        setNativeScrollBehavior();
+        checkState();
+        setupAnchors();
+
+        let resizeTimer;
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                setNativeScrollBehavior();
+                updateMaxScroll();
+                checkState();
+            }, 120);
+        });
+    }
+
+    window.initSmoothScroll = initSmoothScroll;
+
+})(window, document);
+
+window.addEventListener("load", () => {
+    initSmoothScroll();
+});
+</script>
