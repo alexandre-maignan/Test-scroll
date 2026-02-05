@@ -7,6 +7,7 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
+            scroll-behavior: smooth;
         }
 
         /* Navbar */
@@ -190,7 +191,7 @@
         }
 
         function setNativeScrollBehavior() {
-            const behavior = isMobile() ? "" : "auto";
+            const behavior = isMobile() ? "smooth" : "auto";
             document.documentElement.style.scrollBehavior = behavior;
             document.body.style.scrollBehavior = behavior;
         }
@@ -249,7 +250,6 @@
         function render() {
             if (!state.enabled) return;
 
-            /* 🔑 FIX CRITIQUE */
             updateMaxScroll();
             state.target = clamp(state.target, 0, state.maxScroll);
 
@@ -276,10 +276,10 @@
         /* ---------- Anchors ---------- */
 
         function setupAnchors() {
+            if (isMobile()) return; // 🔑 laisse le CSS gérer les ancres
+
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener("click", e => {
-                    if (isMobile()) return;
-
                     const targetEl = document.querySelector(
                         anchor.getAttribute("href")
                     );
